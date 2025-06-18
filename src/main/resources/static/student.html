@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>학생 - Whiteboard 수신 (AutoReconnect)</title>
+</head>
+<body>
+<h2>🎓 학생 - Whiteboard 수신</h2>
+
+<label>Room ID: <input type="text" id="roomId" value="FTYXPM" /></label><br>
+<label>학생 이름: <input type="text" id="studentName" value="student" /></label><br>
+
+<button onclick="connect()">Connect</button>
+
+<pre id="log" style="border:1px solid #ccc; padding:10px; margin-top:20px; height:300px; overflow:auto;"></pre>
+
+<script>
+    let socket;
+    const serverPorts = [8080, 8081];
+    let currentServerIndex = 0;
+    let reconnecting = false;
+
+    function get(id) {
+        return document.getElementById(id).value;
+    }
+
+    function log(msg) {
+        const logBox = document.getElementById("log");
+        logBox.textContent += msg + "\n";
+        logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    function buildWsUrl() {
+        const userId = encodeURIComponent(get("studentName"));
+        const userType = "student";
+        const roomId = get("roomId");
+        const port = serverPorts[currentServerIndex % serverPorts.length];
+
+        return `ws://localhost:${port}/ws?userId=${userId}&userType=${userType}&roomId=${roomId}`;
+    }
+
+    function connect() {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            log("⚠️ 이미 연결되어 있습니다. 새 연결 전에 기존 연결을 닫아주세요.");
+            return;
+        }
+
+        const wsUrl = buildWsUrl();
+        log(`🔌 서버 연결 시도: ${wsUrl}`);
+        socket = new WebSocket(wsUrl);
+
+        socket.onopen = () => {
+            log("✅ WebSocket 연결됨");
+            reconnecting = false;
+        };
+
+        socket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+
+            if (data.messageType === "leave" && data.senderType === "teacher") {
+                log("🛑 교사가 퇴장했습니다. 세션을 종료합니다.");
+                socket.close();
+                return;
+            }
+
+            log(`📥 수신됨 (${data.sender}): ${data.message}`);
+        };
+
+        socket.onclose = () => {
+            log("❌ 연결 종료됨");
+            if (!reconnecting) {
+                reconnecting = true;
+                currentServerIndex++;
+                log("🔁 3초 후 다른 서버로 재접속 시도...");
+                setTimeout(connect, 3000);
+            }
+        };
+
+        socket.onerror = (error) => {
+            log("🚨 오류 발생: " + (error.message || "WebSocket 오류"));
+        };
+    }
+</script>
+</body>
+</html>

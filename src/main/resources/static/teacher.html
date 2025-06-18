@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>교사 - 메시지 브로드캐스트</title>
+    <style>
+        #container {
+            display: flex;
+            gap: 20px;
+        }
+        #log {
+            flex: 1;
+            border: 1px solid #ccc;
+            padding: 10px;
+            height: 300px;
+            overflow-y: auto;
+        }
+        #participants {
+            width: 200px;
+            border: 1px solid #ccc;
+            padding: 10px;
+        }
+    </style>
+</head>
+<body>
+<h2>🧑‍🏫 교사 - 메시지 전송 (WebSocket + Redis Pub/Sub)</h2>
+
+<label>서버 IP: <input type="text" id="serverIp" value="localhost" /></label><br>
+<label>서버 포트: <input type="text" id="serverPort" value="8080" /></label><br>
+<label>Room ID: <input type="text" id="roomId" value="FTYXPM" /></label><br>
+<label>교사 이름: <input type="text" id="senderName" value="담임선생님" /></label><br>
+<label>이미지 URL: <input type="text" id="msg" style="width: 500px;" /></label><br>
+
+<button onclick="connect()">Connect</button>
+<button onclick="send()">메시지 전송</button>
+
+<div id="container">
+    <pre id="log"></pre>
+    <div id="participants">
+        <strong>👥 참가자</strong>
+        <ul id="participantList"></ul>
+    </div>
+</div>
+
+<script>
+    let socket;
+    const participants = new Set();
+
+    function get(id) {
+        return document.getElementById(id).value;
+    }
+
+    function log(msg) {
+        const logBox = document.getElementById("log");
+        logBox.textContent += msg + "\n";
+        logBox.scrollTop = logBox.scrollHeight;
+    }
+
+    function updateParticipantList() {
+        const list = document.getElementById("participantList");
+        list.innerHTML = "";
+        [...participants].forEach(name => {
+            const li = document.createElement("li");
+            li.textContent = name;
+            list.appendChild(li);
+        });
+    }
+
+    function connect() {
+        if (socket && socket.readyState === WebSocket.OPEN) {
+            log("⚠️ 이미 연결되어 있습니다. 새 연결 전에 기존 연결을 닫아주세요.");
+            return;
+        }
+
+        const userId = "TEACHER001";
+        const userType = "teacher";
+        const roomId = get("roomId");
+        const ip = get("serverIp");
+        const port = get("serverPort");
+
+        const wsUrl = `ws://${ip}:${port}/ws?userId=${userId}&userType=${userType}&roomId=${roomId}`;
+        log(`🔌 서버 연결 시도: ${wsUrl}`);
+        socket = new WebSocket(wsUrl);
+
+        socket.onopen = () => {
+            log("✅ WebSocket 연결됨");
+        };
+
+        socket.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+
+            if (data.type === "join") {
+                log(`🟢 ${data.sender} 입장`);
+                participants.add(data.sender);
+                updateParticipantList();
+            } else if (data.senderType === "student" && data.messageType === "leave") {
+                log(`🔴 ${data.sender} 퇴장`);
+                participants.delete(data.sender);
+                updateParticipantList();
+            } else {
+                log(`📥 수신됨 (${data.sender}): ${data.message}`);
+            }
+        };
+
+        socket.onclose = () => {
+            log("❌ WebSocket 연결 종료됨");
+        };
+
+        socket.onerror = (err) => {
+            log("🚨 WebSocket 오류: " + err.message);
+        };
+    }
+
+    function send() {
+        const roomId = get("roomId");
+        const timestamp = Date.now();
+        const message = {
+            room: "room:" + roomId,
+            senderType: "teacher",
+            sender: "TEACHER001",
+            targetType: "student",
+            messageType: "send",
+            message: get("msg")
+        };
+
+        socket.send(JSON.stringify(message));
+        log(`📤 [${timestamp}] 메시지 전송됨`);
+    }
+</script>
+</body>
+</html>
