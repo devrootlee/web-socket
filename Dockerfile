@@ -1,5 +1,5 @@
-# JAVA 21
-FROM openjdk:21-jdk-slim
+# JAVA 17
+FROM openjdk:17-jdk-slim
 
 # 작업 디렉토리 생성
 WORKDIR /app
