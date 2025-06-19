@@ -47,3 +47,9 @@ src
         ├── student.html
         └── teacher.html
 ```
+
+
+### 테스트방법
+1. 접속: ssh -i [pemkey] ubuntu@[hostIP]
+2. 레디스 도커 접근: sudo docker exec -it redis redis-cli
+3. 레디스 모니터링: monitor

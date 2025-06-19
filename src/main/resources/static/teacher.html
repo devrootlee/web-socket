@@ -99,7 +99,7 @@
         socket.onmessage = (event) => {
             const data = JSON.parse(event.data);
 
-            if (data.type === "join") {
+            if (data.messageType === "join") {
                 log(`🟢 ${data.sender} 입장`);
                 participants.add(data.sender);
                 updateParticipantList();
