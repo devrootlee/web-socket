@@ -1,0 +1,41 @@
+version: '3.8'
+
+
+
+services:
+  redis:
+    image: redis:7
+    container_name: redis
+    ports:
+      - "6379:6379"
+
+  server_a:
+    image: websocket-app:latest
+    container_name: server_a-app
+    restart: on-failure:3
+    ports:
+      - "8080:8080"
+    networks:
+      - server
+
+  server_b:
+    image: websocket-app:latest
+    container_name: server_b-app
+    restart: on-failure:3
+    ports:
+      - "8081:8080"
+    networks:
+      - server
+
+  server_c:
+    image: websocket-app:latest
+    container_name: server_c-app
+    restart: on-failure:3
+    ports:
+      - "8082:8080"
+    networks:
+      - server
+
+networks:
+  server:
+    driver: bridge
