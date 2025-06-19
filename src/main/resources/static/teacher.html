@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
     <meta charset="UTF-8">
-    <title>교사 - 메시지 브로드캐스트</title>
+    <title>교사 화면</title>
     <style>
         #container {
             display: flex;
@@ -23,16 +23,17 @@
     </style>
 </head>
 <body>
-<h2>🧑‍🏫 교사 - 메시지 전송 (WebSocket + Redis Pub/Sub)</h2>
+<h2>🧑‍🏫 교사(WebSocket + Redis Pub/Sub)</h2>
 
-<label>서버 IP: <input type="text" id="serverIp" value="localhost" /></label><br>
-<label>서버 포트: <input type="text" id="serverPort" value="8080" /></label><br>
+<!-- 자동 표시되는 서버 주소 -->
+<p>서버 주소 (자동 감지됨): <code id="serverUrlDisplay"></code></p>
 <label>Room ID: <input type="text" id="roomId" value="FTYXPM" /></label><br>
-<label>교사 이름: <input type="text" id="senderName" value="담임선생님" /></label><br>
+<label>교사 ID: <input type="text" id="teacherId" value="teacher" /></label><br>
 <label>이미지 URL: <input type="text" id="msg" style="width: 500px;" /></label><br>
 
-<button onclick="connect()">Connect</button>
+<button onclick="connect()">웹소캣 연결</button>
 <button onclick="send()">메시지 전송</button>
+<button onclick="disconnect()">웹소캣 종료</button>
 
 <div id="container">
     <pre id="log"></pre>
@@ -45,6 +46,13 @@
 <script>
     let socket;
     const participants = new Set();
+
+    // 자동으로 서버 주소 채워주기
+    window.onload = () => {
+        const wsProtocol = location.protocol === 'https:' ? 'wss' : 'ws';
+        const baseUrl = `${wsProtocol}://${location.host}/ws`;
+        document.getElementById("serverUrlDisplay").textContent = baseUrl;
+    };
 
     function get(id) {
         return document.getElementById(id).value;
@@ -72,18 +80,20 @@
             return;
         }
 
-        const userId = "TEACHER001";
+        const userId = get("teacherId");
         const userType = "teacher";
         const roomId = get("roomId");
-        const ip = get("serverIp");
-        const port = get("serverPort");
+        const baseUrl = document.getElementById("serverUrlDisplay").textContent;
 
-        const wsUrl = `ws://${ip}:${port}/ws?userId=${userId}&userType=${userType}&roomId=${roomId}`;
+        const wsUrl = `${baseUrl}?userId=${userId}&userType=${userType}&roomId=${roomId}`;
         log(`🔌 서버 연결 시도: ${wsUrl}`);
         socket = new WebSocket(wsUrl);
 
         socket.onopen = () => {
             log("✅ WebSocket 연결됨");
+            // 🔒 연결 이후 input 변경 불가 처리
+            document.getElementById("roomId").disabled = true;
+            document.getElementById("teacherId").disabled = true;
         };
 
         socket.onmessage = (event) => {
@@ -113,11 +123,12 @@
 
     function send() {
         const roomId = get("roomId");
+        const sender = get("teacherId");
         const timestamp = Date.now();
         const message = {
             room: "room:" + roomId,
             senderType: "teacher",
-            sender: "TEACHER001",
+            sender: sender,
             targetType: "student",
             messageType: "send",
             message: get("msg")
@@ -125,6 +136,20 @@
 
         socket.send(JSON.stringify(message));
         log(`📤 [${timestamp}] 메시지 전송됨`);
+    }
+
+    function disconnect() {
+        if (!socket || socket.readyState !== WebSocket.OPEN) {
+            log("⚠️ 닫을 수 있는 WebSocket 연결이 없습니다.");
+            return;
+        }
+
+        socket.close(1000, "사용자 요청으로 종료"); // 정상 종료 코드
+        log("🔒 WebSocket 수동 종료 요청 보냄");
+
+        // 🔓 입력 다시 가능하게 전환
+        document.getElementById("roomId").disabled = false;
+        document.getElementById("teacherId").disabled = false;
     }
 </script>
 </body>
