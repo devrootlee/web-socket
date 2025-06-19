@@ -48,11 +48,6 @@ dependencies {
     implementation 'org.springdoc:springdoc-openapi-starter-common:2.2.0'
 }
 
-bootJar {
-    destinationDirectory.set(file("./target/."))
-}
-
-
 springBoot {
     mainClass = 'com.websocket.Application'
 }
