@@ -76,7 +76,7 @@ jobs:
             sudo docker-compose rm -f server_a server_b server_c
 
             echo "🚀 Start containers fresh"
-            sudo docker-compose up -d server_a server_b server_c
+            sudo docker-compose up -d redis server_a server_b server_c
 
             echo "✅ Compose containers restarted"
           debug: 'true'
