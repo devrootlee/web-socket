@@ -72,8 +72,8 @@ jobs:
             sudo docker load < websocket-app.tar
 
             echo "🧼 Remove previous containers"
-            sudo docker-compose stop server_a server_b server_c
-            sudo docker-compose rm -f server_a server_b server_c
+            sudo docker-compose stop redis server_a server_b
+            sudo docker-compose rm -f server_a server_b
 
             echo "🚀 Start containers fresh"
             sudo docker-compose up -d redis 
@@ -84,8 +84,6 @@ jobs:
             
             sudo docker-compose up -d server_b
             sleep 30
-            
-            sudo docker-compose up -d server_c
-
+          
             echo "✅ Compose containers restarted"
           debug: 'true'
