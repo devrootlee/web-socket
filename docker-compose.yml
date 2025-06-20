@@ -1,6 +1,4 @@
-version: '3.8'
-
-
+version: '2.4'
 
 services:
   redis:
@@ -19,6 +17,8 @@ services:
       - "8080:8080"
     networks:
       - server
+    cpus: 0.5
+    mem_limit: 512m
 
   server_b:
     image: websocket-app:latest
@@ -28,6 +28,8 @@ services:
       - "8081:8080"
     networks:
       - server
+    cpus: 0.5
+    mem_limit: 512m
 
   server_c:
     image: websocket-app:latest
@@ -37,6 +39,8 @@ services:
       - "8082:8080"
     networks:
       - server
+    cpus: 0.5
+    mem_limit: 512m
 
 networks:
   server:
