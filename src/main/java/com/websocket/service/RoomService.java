@@ -1,6 +1,5 @@
 package com.websocket.service;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.websocket.model.SocketMessage;
 import com.websocket.redis.RedisPublisher;
 import com.websocket.redis.RedisService;
@@ -48,7 +47,7 @@ public class RoomService {
                 .message(userId + "입장")
                 .build();
 
-        publish(message);
+        redisService.publish(message);
     }
 
     public void sendMessage(String payload) {
@@ -68,7 +67,7 @@ public class RoomService {
                 .message(userId + "퇴장")
                 .build();
 
-        publish(message);
+        redisService.publish(message);
     }
 
     public void clientLeave(String room, String roomId, String userId, String userType, String targetType) {
@@ -84,14 +83,6 @@ public class RoomService {
                 .message(userId + "퇴장")
                 .build();
 
-        publish(message);
-    }
-
-    private void publish(SocketMessage message) {
-        try {
-            redisPublisher.publish(new ObjectMapper().writeValueAsString(message));
-        } catch (Exception e) {
-            LOGGER.error(e.getMessage());
-        }
+        redisService.publish(message);
     }
 }
