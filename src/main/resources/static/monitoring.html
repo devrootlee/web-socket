@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>사용자 모니터링</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 20px;
+        }
+
+        h2 {
+            margin-bottom: 10px;
+        }
+
+        .user {
+            padding: 8px;
+            margin-bottom: 5px;
+            background: #f0f0f0;
+            border-radius: 6px;
+        }
+
+        .error {
+            color: red;
+        }
+    </style>
+</head>
+<body>
+<h2>🧍 사용자 모니터링</h2>
+<div id="userList"><p>불러오는 중...</p></div>
+
+<script>
+    function fetchUsers() {
+        fetch("/monitoring/users")
+            .then(res => res.json())
+            .then(users => {
+                const container = document.getElementById("userList");
+                container.innerHTML = "";
+
+                if (users.length === 0) {
+                    container.innerHTML = "<p>접속 중인 사용자가 없습니다.</p>";
+                    return;
+                }
+
+                users.forEach(user => {
+                    const div = document.createElement("div");
+                    div.className = "user";
+                    div.textContent = `👤 ${user.userId} | 🏫 방: ${user.roomId} | 🎭 유형: ${user.userType} | 🖥 서버: ${user.serverId}`;
+                    container.appendChild(div);
+                });
+            })
+            .catch(err => {
+                console.error("사용자 목록 조회 실패:", err);
+                document.getElementById("userList").innerHTML =
+                    "<p class='error'>🚫 사용자 목록을 불러올 수 없습니다.</p>";
+            });
+    }
+
+    setInterval(fetchUsers, 3000);
+    window.onload = fetchUsers;
+</script>
+</body>
+</html>

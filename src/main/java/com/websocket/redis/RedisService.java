@@ -1,15 +1,22 @@
 package com.websocket.redis;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.websocket.model.SocketMessage;
 import lombok.RequiredArgsConstructor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 
-import java.util.Set;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 public class RedisService {
+    private static final Logger LOGGER = LoggerFactory.getLogger(RedisService.class);
+
     private final RedisTemplate<String, String> redisTemplate;
+    private final RedisPublisher redisPublisher;
 
     // 방 생성
     public void createRoom(String roomId, String userId, String userType, String serverId) {
@@ -66,5 +73,48 @@ public class RedisService {
             }
         }
         redisTemplate.delete(redisKey);
+    }
+
+    // 전체 사용자 조회
+    public List<Map<String, String>> getAllConnectedUsers() {
+        List<Map<String, String>> result = new ArrayList<>();
+
+        Set<String> roomKeys = redisTemplate.keys("room:*:users");
+
+        if (roomKeys == null) return result;
+
+        for (String roomKey : roomKeys) {
+            String roomId = roomKey.split(":")[1];
+
+            Set<String> userIds = redisTemplate.opsForSet().members(roomKey);
+
+            if (userIds == null) continue;
+
+            for (String userId : userIds) {
+                String userKey = "room:" + roomId + ":user:" + userId;
+
+                String userType = (String) redisTemplate.opsForHash().get(userKey, "userType");
+                String serverId = (String) redisTemplate.opsForHash().get(userKey, "serverId");
+
+                Map<String, String> userMap = new HashMap<>();
+                userMap.put("roomId", roomId);
+                userMap.put("userId", userId);
+                userMap.put("userType", userType);
+                userMap.put("serverId", serverId);
+
+                result.add(userMap);
+            }
+        }
+
+        return result;
+    }
+
+    // 메시지 전송
+    public void publish(SocketMessage message) {
+        try {
+            redisPublisher.publish(new ObjectMapper().writeValueAsString(message));
+        } catch (Exception e) {
+            LOGGER.error(e.getMessage());
+        }
     }
 }

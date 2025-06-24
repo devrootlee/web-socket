@@ -1,6 +1,6 @@
 # WebSocket 기반 실시간 상호작용 서버
 이 프로젝트는 **SpringBoot + WebSocket + Redis Pub/Sub** 을 기반으로 
-host 와 client 간 실시간 상호작용이 가능하며 요구사항에 따라 구조는 얼만든지 변경 가능
+Host 와 Client 간 실시간 상호작용이 가능하며 요구사항에 따라 구조는 얼만든지 변경 가능
 
 ---
 
@@ -17,11 +17,18 @@ host 와 client 간 실시간 상호작용이 가능하며 요구사항에 따�
 ## 메시지 구조
 
 ```
-
+{
+  "room": "room:FTYXPM", - 방 ID 
+  "senderType": "teacher", - 송신자 유형
+  "sender": "teacher", - 송신자 ID
+  "targetType": "student", - 수신자 유형
+  "messageType": "send", - 메시지 유형
+  "message": "여러분 안녕하세요" - 메시지
+}
 ```
 
 ---
-## 실시간 메시지 흐름
+## WebSocket 서버 메시지 처리 과정
 
 1. Host 가 WebSocket 서버 연결(room 생성)
 2. Client 가 WebSocket 서버 연결(존재하는 room 에만 연결 가능) -> Host 한테 `join` 메시지 전달
@@ -35,7 +42,7 @@ host 와 client 간 실시간 상호작용이 가능하며 요구사항에 따�
 
 ---
 
-## Redis 구조
+## Redis 저장 구조
 
 | 키                             | 타입   | 설명                                    |
 |--------------------------------|--------|---------------------------------------|
@@ -115,3 +122,7 @@ src
 1. 접속: ssh -i [pemkey] ubuntu@[hostIP]
 2. 레디스 도커 접근: sudo docker exec -it redis redis-cli
 3. 레디스 모니터링: monitor
+4. 레디스 명령어
+   - KEYS *: 레디스에 저장되어있는 모든 KEY 확인
+   - HGETALL [key]: 해당 key 에 있는 hashkey 확인
+   - 

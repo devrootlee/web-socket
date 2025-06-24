@@ -46,7 +46,6 @@ public class CustomWebSocketHandler extends TextWebSocketHandler {
     // [클라이언트로부터 메시지를 수신했을 때 호출]
     @Override
     protected void handleTextMessage(WebSocketSession session, TextMessage message) {
-        System.out.println(message);
         roomService.sendMessage(message.getPayload());
     }
 
